@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>45-Minute Training Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f1f5f6;--panel:#ffffff;--text:#10222b;--muted:#566f79;--line:#d5e0e3;
+  --warm:#3f9a30;--hard:#d92b4d;--easy:#0f9d96;--lift:#7a58e0;--rest:#b27a00;--cool:#2f62d1;--done:#10222b;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1a21;--panel:#15252e;--text:#eaf2f4;--muted:#8ea5ae;--line:#25404c;
+    --warm:#8bd17c;--hard:#ff4d6d;--easy:#3fd0c9;--lift:#b69cff;--rest:#f2c14e;--cool:#7aa7ff;--done:#eaf2f4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1a21;--panel:#15252e;--text:#eaf2f4;--muted:#8ea5ae;--line:#25404c;
+  --warm:#8bd17c;--hard:#ff4d6d;--easy:#3fd0c9;--lift:#b69cff;--rest:#f2c14e;--cool:#7aa7ff;--done:#eaf2f4;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;font-family:'Figtree',system-ui,sans-serif;color:var(--text);
+  --ph:var(--done);background:color-mix(in srgb,var(--ph) 13%,var(--bg));transition:background .4s}
+body[data-t=warm]{--ph:var(--warm)}body[data-t=hard]{--ph:var(--hard)}body[data-t=easy]{--ph:var(--easy)}
+body[data-t=lift]{--ph:var(--lift)}body[data-t=rest]{--ph:var(--rest)}body[data-t=cool]{--ph:var(--cool)}
+main{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.days button{padding:10px 0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;
+  font:600 15px 'Figtree',sans-serif;cursor:pointer}
+.days button[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+h1{font:800 22px/1.1 'Big Shoulders Display','Arial Narrow',Impact,sans-serif;letter-spacing:.02em;margin:18px 0 2px}
+.gear{color:var(--muted);font-size:14px;margin:0}
+.stage{position:relative;width:min(80vw,340px);aspect-ratio:1;margin:18px auto 6px}
+.stage svg{width:100%;height:100%;transform:rotate(-90deg)}
+.trk{fill:none;stroke:var(--line);stroke-width:14}
+.arc{fill:none;stroke:var(--ph);stroke-width:14;stroke-linecap:round}
+.mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 40px}
+.phase{font:700 26px/1 'Big Shoulders Display','Arial Narrow',Impact,sans-serif;color:var(--ph);letter-spacing:.03em}
+.time{font:800 clamp(68px,22vw,104px)/1 'Big Shoulders Display','Arial Narrow',Impact,sans-serif;font-variant-numeric:tabular-nums;margin:2px 0}
+.round{font-size:14px;color:var(--muted);min-height:18px}
+.cue{text-align:center;font-size:17px;margin:10px auto 0;max-width:420px;min-height:46px}
+.next{text-align:center;color:var(--muted);font-size:14px;margin:4px 0 14px}
+.next b{color:var(--text)}
+.ctl{display:flex;justify-content:center;align-items:center;gap:14px}
+.ctl button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:50%;width:56px;height:56px;cursor:pointer;
+  display:grid;place-items:center}
+.ctl button svg{width:24px;height:24px;fill:currentColor}
+.ctl .go{width:84px;height:84px;background:var(--ph);border-color:var(--ph);color:#fff}
+.ctl .go svg{width:36px;height:36px}
+button:focus-visible{outline:3px solid var(--text);outline-offset:2px}
+.tl{display:flex;gap:2px;height:30px;margin:26px 0 8px;align-items:stretch}
+.tl i{display:block;min-width:2px;border-radius:3px;background:var(--c);opacity:.28;cursor:pointer}
+.tl i.past{opacity:.75}.tl i.now{opacity:1;outline:2px solid var(--text);outline-offset:1px}
+.tot{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.tot div{height:100%;width:0;background:var(--ph)}
+.stat{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:8px;font-variant-numeric:tabular-nums}
+.opts{display:flex;gap:10px;justify-content:center;margin-top:22px}
+.opts button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 14px;font:600 14px 'Figtree',sans-serif;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:20px;font-size:13px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px}
+@media (prefers-reduced-motion:reduce){body{transition:none}}
+.coach{margin:16px 0 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.coach svg{width:100%;height:170px;display:block;color:var(--ph)}
+#fb,#fg,#fl{fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+#fg{opacity:.4}#fl{stroke-width:2;opacity:.6}#fcap{fill:var(--muted);font:600 11px 'Figtree',sans-serif}#prop{fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round}
+#fh{fill:var(--panel);stroke:currentColor;stroke-width:4}#fw{fill:var(--text)}
+.tgt{font:700 20px/1.15 'Big Shoulders Display','Arial Narrow',Impact,sans-serif;letter-spacing:.02em;margin:6px 0 4px}
+.coach p{margin:4px 0;font-size:14px;color:var(--muted)}.coach p.say{color:var(--text);font-size:16px;font-weight:600}
+.hud{display:flex;gap:10px;justify-content:center;margin-top:18px;font:700 20px 'Big Shoulders Display','Arial Narrow',Impact,sans-serif}
+.hud span{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+a.lnk{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:8px 14px;font:600 14px 'Figtree',sans-serif;text-decoration:none}
+.tk{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tk h2{margin:0 0 8px;font:800 22px 'Big Shoulders Display','Arial Narrow',Impact,sans-serif}
+.tk p{margin:6px 0;font-size:14px}.tk .fine{color:var(--muted);font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:end}
+.row label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px;flex:1 1 70px}
+.tk input,.tk select{font:inherit;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);width:100%}
+.tk .row button,.ch button{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 14px;font:600 14px 'Figtree',sans-serif;cursor:pointer}
+.ch{display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px}
+.cw,.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cw span{text-align:center;font-size:12px;color:var(--muted)}
+.cd{aspect-ratio:1;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;font:600 13px 'Figtree',sans-serif;position:relative;cursor:pointer;padding:0}
+.cd.we{opacity:.5}.cd.on{background:var(--easy);color:#fff;border-color:var(--easy);opacity:1}.cd.on::after{content:"✓";position:absolute;top:1px;right:4px;font-size:11px}
+.cd small{display:block;font-size:10px;font-weight:400}.cd.td{outline:2px solid var(--text)}
+.views{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.views button{padding:12px 0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;font:600 15px 'Figtree',sans-serif;cursor:pointer}
+.views button[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+[hidden]{display:none!important}
+.days button{padding:12px 0}
+.colA,.colB{display:contents}
+.stage{width:min(66vw,38vh,300px)}
+.ctl{position:sticky;bottom:0;z-index:5;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--ph) 13%,var(--bg))}
+#vp .tk{margin-top:0}
+@media (min-width:720px){
+  main{max-width:1040px}
+  .train{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  .colA,.colB{display:block;min-width:0}
+  .stage{width:min(36vw,54vh,360px)}
+  .ctl{position:static;padding:10px 0;background:none}
+  #vp .tk{max-width:680px;margin:0 auto}
+}
+.hint{text-align:center;color:var(--muted);font-size:13px;margin:8px 0 0}
+.dn .dr{display:grid;grid-template-columns:48px 1fr 48px;gap:6px;align-items:center}
+.dn .dr button{padding:10px 0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;font:600 18px 'Figtree',sans-serif;cursor:pointer}
+#dl{text-align:center;font-weight:600}
+.mr{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mr button{flex:1 1 auto;padding:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;font:600 13px 'Figtree',sans-serif;cursor:pointer}
+.mr button[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.cd.sel{box-shadow:0 0 0 3px var(--lift)}
+.logr{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.logr input{flex:1;min-width:0;max-width:240px;padding:10px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);font:inherit;font-size:14px}
+.logr button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:10px 16px;font:600 14px 'Figtree',sans-serif;cursor:pointer}
+@media (max-height:560px) and (min-width:560px){
+  main{max-width:none;padding:6px 12px 6px}
+  .views{display:flex;gap:6px;margin-bottom:6px}.views button{flex:0 0 auto;padding:6px 16px}
+  .train{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
+  .colA,.colB{display:block;min-width:0}
+  .colB{max-height:calc(100dvh - 52px);overflow-y:auto;padding-bottom:8px}
+  h1,.legend{display:none}.gear{font-size:12px;margin:2px 0}
+  .days button{padding:7px 0}
+  .stage{width:min(40dvh,230px);margin:4px auto 2px}
+  .phase{font-size:20px}.time{font-size:clamp(44px,13vh,76px)}
+  .cue{margin:4px auto;min-height:0;font-size:15px}.next{margin:0 0 6px}
+  .ctl{position:static;padding:4px 0;gap:12px;background:none}
+  .ctl button{width:46px;height:46px}.ctl .go{width:64px;height:64px}
+  .coach{margin-top:0}.coach svg{height:104px}
+  .tl{margin:10px 0 6px}
+  #vp .tk{max-width:none}
+}
+.views{display:flex;justify-content:flex-end;margin-bottom:6px}
+.views button{padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;font:600 13px 'Figtree',sans-serif;cursor:pointer}
+@media (max-height:420px) and (min-width:520px){
+  main{padding:4px 10px;position:relative}
+  .views{position:absolute;top:4px;right:10px;margin:0;z-index:6}.views button{padding:5px 12px;font-size:12px}
+  .train{display:grid;grid-template-columns:auto minmax(150px,.8fr) minmax(0,1.2fr);gap:4px 14px;align-items:start}
+  .colA,.colB{display:contents}
+  .days{grid-column:1/4;grid-row:1;display:flex!important;gap:8px;align-items:center;padding-right:120px}
+  .dn .dr{flex:0 0 auto;grid-template-columns:34px auto 34px}.dn .dr button{padding:3px 0}
+  .mr{margin:0;flex-wrap:nowrap}.mr button{padding:5px 8px}
+  h1,.gear,.legend,.opts,.stat,.tot{display:none}
+  .stage{grid-column:1;grid-row:2/5;--w:clamp(110px,calc(100vh - 84px),200px);--w:clamp(110px,calc(100dvh - 84px),200px);width:var(--w);margin:0}
+  .time{font-size:calc(var(--w)*.3)}.phase{font-size:calc(var(--w)*.1)}.round{display:none}
+  .cue{grid-column:2;grid-row:2;margin:0;min-height:0;font-size:14px;text-align:left}
+  .next{grid-column:2;grid-row:3;margin:0;text-align:left}
+  .ctl{grid-column:2;grid-row:4;position:static;padding:0;background:none;gap:10px;justify-content:flex-start;align-self:start}
+  .ctl button{width:44px;height:44px}.ctl .go{width:60px;height:60px}
+  .coach{grid-column:3;grid-row:2/5;margin:0;padding:6px 10px;overflow:auto;max-height:calc(100dvh - 84px)}
+  .coach svg{height:74px}.tgt{font-size:15px;margin:2px 0}.coach p{font-size:12px;margin:2px 0}
+  .tl{grid-column:1/4;grid-row:5;margin:4px 0 0;height:16px}
+}
+.views{display:flex;flex-wrap:wrap;gap:6px}.views button{flex:1 1 auto;padding:10px 12px;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;font-family:'Figtree',sans-serif;font-weight:600;cursor:pointer}
+.views button[aria-pressed=false]{opacity:.65}
+@media (max-height:560px) and (min-width:560px){.views button{flex:0 0 auto;padding:6px 12px}}
+@media (max-height:420px) and (min-width:520px){.views{gap:4px;flex-wrap:nowrap}.views button{padding:5px 9px;font-size:12px}.days{padding-right:230px;flex-wrap:wrap}#dl{font-size:12px}}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0e1a21">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body data-t="done">
+<main>
+  <div class="views"><button id="snd" aria-pressed="true">Sound on</button><button id="vc" aria-pressed="true">Voice on</button><button id="rst">Restart</button></div>
+  <div class="train" id="vt"><div class="colA"><div class="days" id="days" role="group" aria-label="Choose day"></div>
+  <h1 id="title"></h1>
+  <p class="gear" id="gear"></p>
+  <div class="stage">
+    <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="trk" cx="100" cy="100" r="90"/><circle class="arc" id="arc" cx="100" cy="100" r="90"/></svg>
+    <div class="mid"><div class="phase" id="phase"></div><div class="time" id="time" role="timer" aria-live="off"></div><div class="round" id="round"></div></div>
+  </div>
+  <p class="cue" id="cue"></p>
+  <p class="next" id="next"></p>
+  <div class="ctl">
+    <button id="prev" aria-label="Previous interval"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+    <button class="go" id="go" aria-label="Start"></button>
+    <button id="skip" aria-label="Next interval"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+  </div>
+  </div><div class="colB"><section class="coach" aria-label="Coach">
+    <svg id="fig" viewBox="0 0 200 125" aria-hidden="true"><path id="prop"/><path id="fg"/><path id="fb"/><path id="fl"/><text id="fcap" x="6" y="14"></text><circle id="fh" r="7"/><circle id="fw" r="4.5"/></svg>
+    <div class="tgt" id="tgt"></div><p id="pos"></p><p id="var"></p><p class="say" id="coach"></p>
+  </section>
+  <div class="tl" id="tl" aria-label="Workout timeline"></div>
+  <div class="tot"><div id="bar"></div></div>
+  <div class="stat"><span id="el">0:00 done</span><span id="left">45:00 left</span></div>
+  <div class="legend">
+    <span style="--c:var(--warm)">Warm-up</span><span style="--c:var(--hard)">Hard</span><span style="--c:var(--easy)">Easy</span>
+    <span style="--c:var(--lift)">Lift</span><span style="--c:var(--rest)">Rest</span><span style="--c:var(--cool)">Cool-down</span>
+  </div>
+  </div></div>
+  </main>
+<script>
+const S=(n,s,t,c,r)=>({n,s,t,c,r:r||''});
+const rep=(k,f)=>Array.from({length:k},(_,i)=>f(i+1)).flat();
+const NAMES={warm:'Warm up',hard:'Go hard',easy:'Recover',lift:'Lift',rest:'Rest',cool:'Cool down'};
+function circuit(rounds,ex,work,rest,between,label){
+  return rep(rounds,r=>{
+    const out=[];
+    ex.forEach(([n,c],i)=>{
+      out.push(S(n,work,'lift',c,label+' '+r+' of '+rounds));
+      const last=i===ex.length-1;
+      if(!last)out.push(S('Rest',rest,'rest','Shake it out, set up the next move',label+' '+r+' of '+rounds));
+      else if(r<rounds)out.push(S('Round rest',between,'rest','Water, breathe, reset',label+' '+r+' of '+rounds));
+    });
+    return out;
+  });
+}
+const DAYS=[
+{id:'Mon',title:'Rowing HIIT + strength',gear:'Rower and dumbbells',segs:[
+  S('Warm-up row',300,'warm','Easy pace, build to a steady stroke'),
+  ...rep(12,r=>[S('Hard row',40,'hard','Drive with the legs, then lean, then pull the arms','Interval '+r+' of 12'),S('Easy row',80,'easy','Slow strokes, breathe down','Interval '+r+' of 12')]),
+  ...circuit(3,[['Romanian deadlift x10','Hinge at the hips, soft knees, flat back'],['Push-ups x10','Incline push-ups are fine. Keep the core tight'],['Bent-over row x10','Pull elbows to the hips']],60,20,20,'Round'),
+  S('Easy row',260,'cool','Slow and smooth, let the heart rate fall')]},
+{id:'Tue',title:'Bike interval ladder',gear:'Recumbent bike',segs:[
+  S('Warm-up',300,'warm','Easy spin, light resistance'),
+  ...[1,2,3,4,3,2,1].flatMap((m,i,a)=>{const o=[S(m+' min hard',m*60,'hard','High resistance, strong steady push','Step '+(i+1)+' of 7')];if(i<a.length-1)o.push(S('Easy spin',90,'easy','Light resistance, breathe','Step '+(i+1)+' of 7'));return o;}),
+  S('Steady ride',720,'lift','Moderate pace, you can still talk'),
+  S('Cool-down',180,'cool','Slow the legs down')]},
+{id:'Wed',title:'Full-body strength circuit',gear:'Dumbbells, bench or chair, light bike or rower',segs:[
+  S('Warm-up row',300,'warm','Easy row, build to a steady stroke'),
+  ...circuit(4,[['Goblet box squat','Sit back to a chair, partial depth, knees tracking over toes'],['Shoulder press','Brace your core, press straight up'],['Weighted glute bridge','Squeeze at the top for a beat'],['Single-arm row','Switch arms at 20 seconds'],['Curl to press','Smooth and controlled'],['Plank','Straight line, breathe']],40,20,120,'Round'),
+  S('Easy bike',300,'easy','Light spin to flush the legs'),
+  S('Stretch',380,'cool','Hips, hamstrings, chest, shoulders')]},
+{id:'Thu',title:'Incline walk intervals',gear:'Treadmill. Swap to bike if knees complain',segs:[
+  S('Warm-up walk',300,'warm','Flat, easy pace'),
+  ...rep(7,r=>[S('Steep incline',180,'hard','8 to 12% incline, brisk 3.0 to 3.8 mph. Hands off rails','Interval '+r+' of 7'),S('Easy incline',120,'easy','2 to 3% incline, relaxed pace','Interval '+r+' of 7')]),
+  S('Cool-down walk',300,'cool','Flat and slow')]},
+{id:'Fri',title:'Row endurance + sprints',gear:'Rower',segs:[
+  S('Warm-up row',300,'warm','Easy pace'),
+  S('Steady row',1200,'lift','Hard but conversational. Hold a steady split'),
+  ...rep(8,r=>[S('Sprint',30,'hard','All out, legs first','Sprint '+r+' of 8'),S('Easy row',60,'easy','Recover','Sprint '+r+' of 8')]),
+  S('Dead bug',60,'lift','Low back stays on the floor','Core'),S('Plank',60,'lift','Straight line, breathe','Core'),S('Russian twist',60,'lift','Hold a light dumbbell, rotate from the ribs','Core'),S('Bird dog',120,'lift','Reach long, keep hips level','Core'),
+  S('Cool-down row',180,'cool','Very easy')]}
+];
+const $=id=>document.getElementById(id);
+const C=2*Math.PI*90;$('arc').style.strokeDasharray=C;
+let day=0,idx=0,rem=0,endAt=0,running=false,done=false,sound=true,ac=null,wl=null,lastSec=-1;
+const segs=()=>DAYS[day].segs;
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const total=()=>segs().reduce((a,s)=>a+s.s,0);
+
+function beep(f,d){if(!sound||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='sine';o.connect(g);g.connect(ac.destination);
+  g.gain.setValueAtTime(.0001,ac.currentTime);g.gain.exponentialRampToValueAtTime(.4,ac.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.start();o.stop(ac.currentTime+d+.02);}catch(e){}}
+const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+async function lock(){try{if('wakeLock'in navigator)wl=await navigator.wakeLock.request('screen')}catch(e){}}
+function unlock(){try{wl&&wl.release();wl=null}catch(e){}}
+
+function buildDays(){
+  const d=$('days');d.innerHTML='';
+  DAYS.forEach((x,i)=>{const b=document.createElement('button');b.textContent=x.id;b.setAttribute('aria-pressed',i===day);b.onclick=()=>setDay(i);d.appendChild(b);});
+}
+function buildTL(){
+  const t=$('tl');t.innerHTML='';
+  segs().forEach((s,i)=>{const e=document.createElement('i');e.style.flex=s.s+' 0 0';e.style.setProperty('--c','var(--'+s.t+')');e.title=s.n+' '+fmt(s.s);e.onclick=()=>jump(i);t.appendChild(e);});
+}
+function setDay(i){pause();day=i;idx=0;done=false;rem=segs()[0].s*1000;buildDays();buildTL();
+  $('title').textContent=DAYS[day].title;$('gear').textContent=DAYS[day].gear+' · '+fmt(total())+' total';
+  try{localStorage.setItem('wt-day',i)}catch(e){}paint();}
+function jump(i){const was=running;idx=i;done=false;rem=segs()[i].s*1000;lastSec=-1;if(was)endAt=performance.now()+rem;paint();}
+function start(){if(done){jump(0)}
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume&&ac.resume();}catch(e){}
+  running=true;endAt=performance.now()+rem;lock();beep(880,.15);paint();}
+function pause(){if(running){rem=Math.max(0,endAt-performance.now());}running=false;unlock();paint();}
+function finish(){running=false;done=true;rem=0;unlock();beep(880,.2);setTimeout(()=>beep(1100,.2),260);setTimeout(()=>beep(1320,.5),520);vib([200,100,200,100,400]);paint();}
+function advance(){if(idx>=segs().length-1){finish();return}
+  idx++;endAt+=segs()[idx].s*1000;rem=endAt-performance.now();lastSec=-1;
+  beep(segs()[idx].t==='hard'?1100:760,.35);vib(150);paint();}
+function tick(){if(!running)return;rem=endAt-performance.now();
+  if(rem<=0){advance();return}
+  const sec=Math.ceil(rem/1000);if(sec!==lastSec){lastSec=sec;if(sec<=3)beep(620,.12);}
+  paintTime();}
+
+function elapsed(){let e=0;for(let i=0;i<idx;i++)e+=segs()[i].s;const s=segs()[idx];return e+(done?s.s:s.s-rem/1000);}
+function paintTime(){
+  const s=segs()[idx],r=Math.max(0,rem)/1000;
+  $('time').textContent=done?'0:00':fmt(Math.ceil(r));
+  $('arc').style.strokeDashoffset=C*(1-(done?0:r/s.s));
+  const el=elapsed(),T=total();
+  $('bar').style.width=(el/T*100)+'%';
+  $('el').textContent=fmt(el)+' done';$('left').textContent=fmt(Math.max(0,T-el))+' left';
+}
+function paint(){
+  const s=segs()[idx],n=segs()[idx+1];
+  document.body.dataset.t=done?'done':s.t;
+  $('phase').textContent=done?'Done':NAMES[s.t];
+  $('round').textContent=done?'Workout complete':(s.r?s.r+' · ':'')+s.n;
+  $('cue').textContent=done?'Nice work. Hydrate and stretch.':s.c;
+  $('next').innerHTML=done?'':(n?'Next: <b>'+n.n+'</b> · '+fmt(n.s):'Last interval');
+  $('go').innerHTML=running?'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>';
+  $('go').setAttribute('aria-label',running?'Pause':(done?'Restart':'Start'));
+  [...$('tl').children].forEach((e,i)=>{e.className=done||i<idx?'past':(i===idx?'now':'')});
+  document.title=(running?fmt(Math.ceil(Math.max(0,rem)/1000))+' · ':'')+DAYS[day].id+' timer';
+  paintTime();
+}
+$('go').onclick=()=>running?pause():start();
+$('skip').onclick=()=>{if(idx<segs().length-1)jump(idx+1);else if(!done){done=true;running=false;finish()}};
+$('prev').onclick=()=>{const s=segs()[idx];const used=done?s.s:s.s-Math.max(0,rem)/1000;jump(used>3||idx===0?idx:idx-1)};
+$('rst').onclick=()=>setDay(day);
+$('snd').onclick=e=>{sound=!sound;e.target.setAttribute('aria-pressed',sound);e.target.textContent=sound?'Sound on':'Sound off';};
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();$('go').click()}else if(e.code==='ArrowRight')$('skip').click();else if(e.code==='ArrowLeft')$('prev').click();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&running)lock()});
+setInterval(tick,200);
+let d0=0;try{d0=parseInt(localStorage.getItem('wt-day')||'0',10)||0}catch(e){}
+const dow=new Date().getDay();if(!d0&&dow>=1&&dow<=5)d0=dow-1;
+setDay(Math.min(Math.max(d0,0),4));
+
+// ---- Coach: animated figure, targets, voice ----
+DAYS.forEach((d,i)=>d.eq=['row','bike','row','tread','row'][i]);
+const ST=[100,24,100,36,100,62,100,87,100,112],A=(x)=>ST.concat(x);
+const PO={
+ hinge:[A([101,50,102,64]),[117,80,106,75,82,64,90,88,96,112,108,89,108,103]],
+ push:[[142,78,130,82,78,94,55,100,30,106,130,95,130,108],[142,98,130,100,80,104,55,106,30,108,116,102,130,110]],
+ brow:[[117,80,106,75,82,64,90,88,96,112,108,89,108,103],[117,80,106,75,82,64,90,88,96,112,92,76,104,86]],
+ squat:[A([106,50,112,42]),[95,50,91,60,80,84,112,88,102,112,104,70,110,62]],
+ press:[A([106,50,106,32]),A([103,26,103,8])],
+ curl:[A([101,50,102,64]),A([104,52,112,40]),A([104,26,104,8]),A([104,52,112,40])],
+ bridge:[[28,104,42,104,78,102,104,76,120,106,58,102,78,92],[28,104,42,104,80,80,108,78,120,106,60,100,80,70]],
+ plank:[[124,90,112,92,78,98,50,102,30,106,112,106,128,108],[124,88,112,90,78,95,50,100,30,106,112,106,128,108]],
+ dead:[[28,104,42,104,78,104,80,78,100,78,42,90,42,76],[28,104,42,104,78,104,104,98,130,104,30,102,16,100]],
+ twist:[[64,72,72,80,90,104,116,84,126,108,88,86,100,88],[64,72,72,80,90,104,116,84,126,108,86,80,96,76]],
+ bird:[[124,60,112,66,72,66,72,92,56,108,114,88,116,108],[124,60,112,66,72,66,50,67,28,66,132,64,152,62]],
+ row:[[118,66,110,74,98,98,118,80,112,104,126,78,140,84],[44,66,50,76,64,98,88,102,112,104,66,88,80,82]],
+ idle:[A([101,50,102,64])]};
+PO.stretch=PO.hinge;PO.srow=PO.brow;
+const TT={srow:3,hinge:3.4,push:3,brow:3,squat:3.4,press:3.2,curl:4.4,bridge:3.2,plank:5,dead:4,twist:2.4,bird:5,stretch:6,idle:6};
+const CIR=(x,y,r)=>`M${x-r} ${y}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0-${2*r} 0`;
+const PR={row:'M40 108H150'+CIR(162,92,14),bike:'M34 48L50 98H80L100 86M80 98L77 78M100 86L136 112'+CIR(100,86,13),tread:'M160 113V52H134',squat:'M56 91H76',srow:'M70 76H100M72 76V112'};
+const L={
+ rdl:{fig:'hinge',wt:1,t:'Dial each dumbbell to 25–40 lb · 10 slow reps',pos:'Feet hip-width, soft knees. Push hips back until the dumbbells pass the knees. Back stays flat.',v:'Easier: 15–20 lb or shorter range. Harder: 3-second lowering, or add 5–10 lb.'},
+ push:{fig:'push',t:'Bodyweight · 10 reps',pos:'Hands under shoulders, body in one line, elbows about 45° from the ribs. Chest to a fist above the floor.',v:'Easier: hands on a bench or wall. Harder: 3-second lowering, feet on a step.'},
+ brow:{fig:'brow',wt:1,t:'Dial each dumbbell to 20–30 lb · 10 reps',pos:'Hinge to about 45°, back flat, neck neutral. Pull elbows to your hips, squeeze shoulder blades.',v:'Easier: 15 lb each. Harder: 1-second pause at the top.'},
+ sq:{fig:'squat',wt:1,t:'One dumbbell dialed to 25–40 lb, held at the chest',pos:'Feet shoulder-width, dumbbell vertical at the sternum. Sit back to a bench, stop at a pain-free partial depth.',v:'Easier: bodyweight to the bench. Harder: pause on the bench, then stand.'},
+ cur:{fig:'curl',wt:1,t:'Dial each dumbbell to 10–20 lb',pos:'Stand tall, elbows by your ribs. Curl up, rotate palms forward, press overhead, reverse slowly.',v:'Easier: curls only. Harder: add 5 lb or slow to 4 seconds per rep.'},
+ pr:{fig:'press',wt:1,t:'Dial each dumbbell to 15–25 lb',pos:'Stand tall, dumbbells at the shoulders. Press straight up past the ears without arching your back.',v:'Easier: 10–15 lb or seated. Harder: alternate arms.'},
+ br:{fig:'bridge',wt:1,t:'One dumbbell dialed to 30–55 lb across the hips',pos:'On your back, knees bent, feet flat hip-width. Drive through the heels, squeeze glutes at the top.',v:'Easier: bodyweight. Harder: single leg or 2-second hold.'},
+ sr:{fig:'srow',wt:1,t:'One dumbbell dialed to 25–40 lb · switch at 20 sec',pos:'One hand and knee on a bench, back flat. Pull the elbow to the hip, no twisting.',v:'Easier: 20 lb. Harder: pause at the top.'},
+ pl:{fig:'plank',t:'Bodyweight · hold',pos:'Elbows under shoulders, body in one line, ribs down, glutes tight.',v:'Easier: knees down or hands on a bench. Harder: lift one foot for 5 seconds.'},
+ db:{fig:'dead',t:'Bodyweight · slow, alternate sides',pos:'On your back, knees over hips, low back pressed down. Lower the opposite arm and leg, then return.',v:'Easier: legs only. Harder: hold a light dumbbell overhead.'},
+ tw:{fig:'twist',wt:1,t:'One dumbbell dialed to 10–20 lb · feet on the floor',pos:'Sit, lean back about 45°, chest tall. Rotate the ribs side to side, not just the arms.',v:'Easier: no weight. Harder: lift the feet slightly.'},
+ bd:{fig:'bird',t:'Bodyweight · slow',pos:'Hands under shoulders, knees under hips, flat back. Reach opposite arm and leg long, hips level.',v:'Easier: legs only. Harder: 3-second hold at full reach.'},
+ st:{fig:'stretch',t:'Gentle holds · breathe slowly',pos:'Hamstrings, hips, chest and shoulders. No bouncing, ease into each stretch.',v:'Easier: bend the knees. Harder: hold each stretch longer.'}};
+const LK=[[/deadlift/,'rdl'],[/Push-up/,'push'],[/Bent-over/,'brow'],[/squat/i,'sq'],[/Curl/,'cur'],[/press/i,'pr'],[/glute/i,'br'],[/Single-arm/,'sr'],[/Plank/,'pl'],[/Dead bug/,'db'],[/Russian/,'tw'],[/Bird/,'bd'],[/Stretch/,'st']];
+const CD={
+ row:{warm:['18–20 SPM · lever stays put · light pulls',19],hard:['28–30 SPM max · full power every stroke · RPE 8–9',29],sprint:['30 SPM max · all-out power · RPE 9–10',30],easy:['18–20 SPM · lighter pulls, same lever',19],lift:['22–24 SPM · RPE 6–7',23],cool:['16–18 SPM · very light',17]},
+ bike:{warm:['60–70 RPM · level 2',65],hard:['85–95 RPM · level 7–8 · RPE 8–9',90],easy:['60–70 RPM · level 3',65],lift:['75–80 RPM · level 5–6 · RPE 6',77],cool:['55–60 RPM · level 1–2',57]},
+ tread:{warm:['2.5–3.0 mph · 0–1% incline',52],hard:['3.0–3.5 mph · 4–8% incline',56],easy:['2.8–3.2 mph · 2–3% incline',54],cool:['2.5 mph · flat',48]}};
+const CP={row:'Legs first, then lean back, then pull the arms to the ribs. Reverse on the way back, back tall. Set the Merach lever to 5 for the whole session (4–6 is the usual range) and leave it. Resistance also rises as you pull harder. Watch SPM and Watts on the monitor.',bike:'Seat set so the knee stays slightly bent at full extension. Hands relaxed, chest open. Set the Level on the console (1–10). One pedal turn per second is about 60 RPM, so pace by that count and your effort.',tread:'Tall posture, quick light steps, hands off the rails. Use the 1750 quick speed and incline keys, and keep the safety key clipped on. Walk only, and if a knee complains, lower the incline first.'};
+const CV={row:'Easier: drop the lever one level or 2–4 SPM. Harder: stay at the 30 SPM cap, raise the lever one level, and push for higher watts.',bike:'Easier: drop 1 level. Harder: go up 1 level (max 10) or pedal faster. Levels are starting points, adjust to match the effort.',tread:'Easier: drop 2% incline or 0.2 mph. Harder: add 1% incline (keep it at 8% or less for your knees) or 0.2 mph. Stop and ease off if a knee hurts.'};
+const M={hard:['Drive through the legs. You can rest in a minute!','This is the work that burns fat. Stay strong.','Strong and smooth. Don’t slow down now.','Finish this one stronger than you started.'],lift:['Control every rep. Quality beats speed.','Brace your core and keep your form tight.','You’re building the muscle that keeps your metabolism up.','Two more good ones. Make them count.'],easy:['Breathe in through the nose, out through the mouth.','Recover well so the next one is strong.'],rest:['Shake out your arms and sip some water.','Breathe. You’re doing great.'],warm:['Loosen up, nothing forced yet.','Easy start. Today is going to be a good one.'],cool:['Great work. Slow it down and let the heart rate drop.','Every session gets you closer to your goal.']};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function meta(i){const s=segs()[i],n=s.n;
+  if(s.t==='rest'){const nx=segs()[i+1];return{fig:'idle',t:'Breathe and shake out',pos:nx?'Up next: '+nx.n+'. '+meta(i+1).pos:'',v:''}}
+  for(const[r,k]of LK)if(r.test(n))return L[k];
+  const eq=/row|sprint/i.test(n)?'row':/ride|spin|bike|min hard/i.test(n)?'bike':/walk|incline/i.test(n)?'tread':DAYS[day].eq;
+  const c=CD[eq][/sprint/i.test(n)?'sprint':s.t]||CD[eq].easy;
+  return{fig:eq,t:c[0],n:c[1],pos:CP[eq],v:CV[eq]}}
+const mt=i=>{const s=segs()[i];return s.m||(s.m=meta(i))};
+function posAt(k,t,T){const p=PO[k],n=p.length,u=(t/T)%1;let i,v;
+  if(n==2){const f=k==='row'?.38:.5;i=u<f?0:1;v=u<f?u/f:(u-f)/(1-f)}else{const x=u*n;i=Math.floor(x);v=x-i}
+  const a=p[i],b=p[(i+1)%n],e=(1-Math.cos(Math.PI*v))/2;return a.map((x,j)=>x+(b[j]-x)*e)}
+function ik(p,a){const dx=a[0]-p[0],dy=a[1]-p[1],L=Math.hypot(dx,dy)||1,d=Math.min(L,53.5),h=Math.sqrt(729-d*d/4);
+  return[(p[0]+a[0])/2+dy/L*h,(p[1]+a[1])/2-dx/L*h]}
+const q=(a,i)=>a[i]+' '+a[i+1],W=Math.PI*2;
+let clk=0,lt=performance.now(),curK='';
+function drawFig(now){const dt=(now-lt)/1000;lt=now;if(running)clk+=dt;
+  const s=segs()[idx],m=mt(idx),k=done?'idle':m.fig;let o,g='',ln='';
+  if(k!==curK){curK=k;$('prop').setAttribute('d','M10 113H190'+(PR[k]||''))}
+  if(k==='bike'){const w=clk*m.n/60*W,P=[64,88],f=ph=>{const a=[100+13*Math.cos(w+ph),86+13*Math.sin(w+ph)];return[ik(P,a),a]};
+    const[k1,a1]=f(0),[k2,a2]=f(Math.PI);o=[40,58,48,66,64,88,k1[0],k1[1],a1[0],a1[1],62,74,76,78];g=`M64 88L${q(k2,0)}L${q(a2,0)}`;ln=`M100 86L${q(a1,0)}M100 86L${q(a2,0)}`}
+  else if(k==='tread'){const w=clk*m.n/60*W,P=[100,62],f=ph=>{const c=w+ph,a=[100+22*Math.cos(c),112+(Math.sin(c)<0?10*Math.sin(c):0)];return[ik(P,a),a]};
+    const[k1,a1]=f(0),[k2,a2]=f(Math.PI),sw=.5*Math.sin(w),e=[100+14*Math.sin(sw),50+14*Math.cos(sw)-14],r=[e[0]+14*Math.sin(sw+.7),e[1]+14*Math.cos(sw+.7)];
+    o=[103,24,102,36,100,62,k1[0],k1[1],a1[0],a1[1],e[0],e[1],r[0],r[1]];g=`M100 62L${q(k2,0)}L${q(a2,0)}`}
+  else{o=posAt(k,clk,k==='row'?60/m.n:TT[k]);if(k==='row')ln=`M${q(o,12)}L148 92`}
+  $('fcap').textContent=done?'':({row:'Rower',bike:'Recumbent bike',tread:'Treadmill'}[k]||s.n);
+  $('fb').setAttribute('d',`M${q(o,2)}L${q(o,4)}L${q(o,6)}L${q(o,8)}M${q(o,2)}L${q(o,10)}L${q(o,12)}M${q(o,2)}L${q(o,0)}`);
+  $('fg').setAttribute('d',g);$('fl').setAttribute('d',ln);
+  $('fh').setAttribute('cx',o[0]);$('fh').setAttribute('cy',o[1]);
+  const fw=$('fw');fw.setAttribute('cx',o[12]);fw.setAttribute('cy',o[13]);fw.style.display=m.wt&&!done?'':'none';
+  requestAnimationFrame(drawFig)}
+requestAnimationFrame(drawFig);
+
+let voice=true,lastAnn='',fl={};
+const dur=n=>{const m=Math.floor(n/60),r=n%60;return(m?m+(m>1?' minutes':' minute'):'')+(m&&r?' ':'')+(r?r+' seconds':'')};
+const sp=t=>t.replace(/SPM/g,'strokes per minute').replace(/RPM/g,'R P M').replace(/RPE/g,'effort level').replace(/ lb/g,' pounds').replace(/·/g,'.').replace(/(\d)\/(\d+)/g,'$1 out of $2').replace(/(\d)–(\d)/g,'$1 to $2');
+function say(t){if(!voice||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(sp(t));u.rate=1.05;speechSynthesis.speak(u)}catch(e){}}
+function card(){const s=segs()[idx],m=mt(idx);
+  $('tgt').textContent=done?'Workout complete':'Length '+fmt(s.s)+' · '+m.t;
+  $('pos').textContent=done?'':m.pos;$('var').textContent=done?'':(m.v||'');
+  $('coach').textContent=done?'Great work. Hydrate and stretch.':(s.cl||(s.cl=pick(M[s.t]||M.easy)))}
+function onSeg(){const s=segs()[idx],m=mt(idx);lastAnn=day+':'+idx;fl={};clk=0;
+  say(s.t==='rest'?'Rest. '+m.pos:s.n+'. '+dur(s.s)+'. '+m.t+'.')}
+const _adv=advance,_jump=jump,_start=start,_fin=finish,_pau=pause,_paint=paint;
+advance=function(){const pc=cls(idx);_adv();if(!running)return;const nc=cls(idx);
+  if(!done&&nc!==pc){gate=true;pause();lock();beep(500,.25);const n=segs()[idx];gmsg=(nc==='w'?'Move to your dumbbells and floor space.':'Move to the '+MN[nc]+'.');say(gmsg+' Next, '+n.n+', '+dur(n.s)+'. Press play when you are ready.')}else onSeg()};
+jump=function(i){gate=false;_jump(i);clk=0;if(running)onSeg();else lastAnn=''};
+start=function(){gate=false;_start();if(lastAnn!==day+':'+idx)onSeg()};
+finish=function(){_fin();say('Workout complete. Great work. Hydrate and stretch.')};
+pause=function(){_pau();try{speechSynthesis.cancel()}catch(e){}};
+paint=function(){_paint();card()};
+setInterval(()=>{if(!running||done)return;const s=segs()[idx],r=rem/1000,nx=segs()[idx+1],pt=s.s>=60?10:s.s>=20?5:0;
+  if(pt&&nx&&r<=pt&&!fl.p){fl.p=1;beep(520,.1);setTimeout(()=>beep(520,.1),180);say('Get ready. Next, '+nx.n+', '+dur(nx.s)+'.')}
+  else if(s.s>=40&&!fl.h&&r<=s.s/2&&r>pt+4&&['hard','lift','warm','cool'].includes(s.t)){fl.h=1;s.cl=pick(M[s.t]);$('coach').textContent=s.cl;say(s.cl)}},200);
+$('vc').onclick=e=>{voice=!voice;e.target.setAttribute('aria-pressed',voice);e.target.textContent=voice?'Voice on':'Voice off';if(!voice)try{speechSynthesis.cancel()}catch(x){}};
+
+// ---- Storage (shuffle and length preference; old history is kept, not shown) ----
+const KEY='wt-log',MET={warm:4,easy:4.5,hard:9,lift:5,rest:2.5,cool:3.5};
+let T={days:{},weights:[],set:{}},dbRef=null;
+const pad=n=>String(n).padStart(2,'0'),dk=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const lbs=()=>+(T.weights.length?T.weights[T.weights.length-1][1]:219)||219;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(T))}catch(e){}if(dbRef)dbRef.set(T).catch(()=>{})}
+async function initT(){try{const x=localStorage.getItem(KEY);if(x)T=Object.assign(T,JSON.parse(x))}catch(e){}
+  T.set=T.set||{};regen();
+  try{if(window.claude&&claude.use){const[db,u]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(db&&u){dbRef=db.doc('data/users/'+await u.id()+'/log');const sn=await dbRef.get();if(sn.exists){mergeT(sn.data());if(!running)regen();save()}else save()}}}catch(e){}}
+function paintHud(){}
+const _sd=setDay,_f2=finish;
+setDay=function(i){_sd(i);const D=DAYS[day];$('gear').textContent=D.gear+' · '+fmt(total())+' · '+D.note};
+// ---- Machine/weights gates and voice control ----
+let gate=false,gmsg='',vcOn=false,rec=null,spk=0,sid=0;
+const MC=['row','bike','tread'],MN={row:'rower',bike:'bike',tread:'treadmill'};
+function cls(i){const g=segs();for(let j=i;j<g.length;j++)if(g[j].t!=='rest'){const f=mt(j).fig;return MC.includes(f)?f:'w'}return'w'}
+const _p3=paint;paint=function(){_p3();if(gate&&!running&&!done){$('phase').textContent='Get set';$('cue').textContent=gmsg+' Press play when you are ready.'}};
+say=function(t){if(!voice||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(sp(t)),id=++sid;u.rate=1.05;spk=Infinity;u.onend=u.onerror=()=>{if(id===sid)spk=performance.now()+900};speechSynthesis.speak(u)}catch(e){}};
+// ---- Calendar-driven, adaptive workouts ----
+let sel=new Date(),mins=45;sel.setHours(0,0,0,0);
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const hash=x=>{let h=2166136261;for(const c of x)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0};
+const rngf=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const r5=n=>Math.max(5,Math.round(n/5)*5),sum=a=>a.reduce((x,y)=>x+y.s,0);
+CD.tread.lift=['3.0–3.5 mph · 4–6% incline',54];
+function level(d){const t=+d,wk=Math.floor((t-new Date(2026,7,26))/6048e5),td=new Date();td.setHours(0,0,0,0);
+  if(wk>=0&&wk%4===3)return[-1,'Deload week: lighter work to recover'];
+  if(t>+td+864e5)return[0,'Planned ahead: standard load'];
+  let c=0;for(let i=1;i<=7;i++){const x=new Date(d);x.setDate(x.getDate()-i);if(T.days[dk(x)])c++}
+  const ws=T.weights.filter(w=>{const a=(t-+new Date(w[0]+'T00:00'))/864e5;return a>=0&&a<=14});
+  if(c<=2)return[-1,'Easing in: few workouts logged in the past week'];
+  if(ws.length>=2){const a=ws[0],b=ws[ws.length-1],wks=Math.max(1,(+new Date(b[0])-+new Date(a[0]))/6048e5);if(c>=4&&(a[1]-b[1])/wks<.5)return[1,'Pushing a little: weight is moving slower than goal pace']}
+  if(!ws.some(w=>(t-+new Date(w[0]+'T00:00'))/864e5<=7))return[0,'No recent weigh-in. Add one to tune your plan'];
+  return[0,'On track: standard load']}
+const CUE={'Goblet box squat':'Sit back to the bench, drive up through the heels','Romanian deadlift x10':'Hinge at the hips, back flat','Weighted glute bridge':'Squeeze at the top for a beat','Shoulder press':'Brace your core, press straight up','Bent-over row x10':'Pull elbows to your hips','Push-ups x10':'Body in one line, controlled','Curl to press':'Smooth and controlled','Single-arm row':'Switch arms halfway','Plank':'Straight line, breathe','Dead bug':'Low back stays down','Russian twist':'Rotate from the ribs','Bird dog':'Reach long, hips level'};
+const POOL={low:['Goblet box squat','Romanian deadlift x10','Weighted glute bridge'],up:['Shoulder press','Bent-over row x10','Push-ups x10','Curl to press','Single-arm row'],core:['Plank','Dead bug','Russian twist','Bird dog']};
+const FM={row:[['40/80 intervals',[40],80],['30/60 intervals',[30],60],['60/60 power intervals',[60],60],['Pyramid 20-60 sec',[20,40,60,40,20],60]],
+ bike:[['Ladder 1-2-3-2-1 min',[60,120,180,120,60],90],['30/30 sprints',[30],30],['90/90 intervals',[90],90],['4-min pushes',[240],120]],
+ tread:[['3/2 incline intervals',[180],120],['Hill climb 2-min steps',[120],90],['Pyramid climb',[60,120,180,120,60],90],['4/2 steep pushes',[240],120]]};
+const NM={row:['Hard row','Easy row','Warm-up row','Steady row','Cool-down row'],bike:['Hard ride','Easy spin','Warm-up spin','Steady ride','Cool-down spin'],tread:['Steep incline','Easy incline','Warm-up walk','Steady incline','Cool-down walk']};
+const HC={row:'Legs, then lean, then pull. Stay at 28–30 SPM',bike:'Strong steady push, stay seated',tread:'Brisk steps, hands off the rails'};
+function cardio(eq,f,lv,time){const[,wk,rs]=f,N=NM[eq],out=[],R=Math.round(rs*(lv<0?1.15:lv>0?.9:1));let used=0,j=0;
+  for(;;){const w=Math.max(20,r5(wk[j%wk.length]*(lv>0?1.15:lv<0?.85:1)));if(used+w+R>time)break;out.push(S(N[0],w,'hard',HC[eq]),S(N[1],R,'easy','Recover and breathe down'));used+=w+R;j++}
+  out.forEach((x,i)=>x.r='Interval '+(Math.floor(i/2)+1)+' of '+out.length/2);return out}
+function lifts(names,lv,time){const w=40+5*lv,r=lv<0?25:20,bt=lv>0?75:90,n=names.length,rt=n*w+(n-1)*r,k=Math.floor((time+bt)/(rt+bt));
+  return k>0?circuit(k,names.map(x=>[x,CUE[x]]),w,r,bt,'Round'):[]}
+function build(d,m,salt){
+  const T0=m*60,wd=d.getDay(),[lv0,note0]=level(d),rg=rngf(hash(dk(d)+'|'+salt)),pick=a=>a[Math.floor(rg()*a.length)],shuf=a=>a.map(x=>[rg(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  const wu=m>=45?300:210,cd=m>=45?240:150,main=T0-wu-cd,wk=wd%6>0,MN={row:'Rower',bike:'Recumbent bike',tread:'Treadmill'};
+  const eq=!wk?pick(['bike','tread']):[0,'row','bike','row','bike','row'][wd],N=NM[eq];
+  const lv=wk?Math.max(-1,Math.min(1,lv0+([0,0,-1,0,0,-1][wd]))):0;
+  const fin=(names,time)=>{const w=45+5*lv,r=15,bt=30,n=names.length,rt=n*w+(n-1)*r,k=Math.floor((time+bt)/(rt+bt));return k>0?circuit(k,names.map(x=>[x,CUE[x]||'Smooth and controlled']),w,r,bt,'Round'):[]};
+  let segs=[S(N[2],wu,'warm','Easy start, build to a steady pace')],title,used=0,gear=MN[eq],cool=N[4],note=wk?note0:'Optional recovery day. Keep it easy';
+  if(!wk){segs.push(S(N[1],main,'easy','Relaxed pace, nose breathing'));title='Active recovery';used=main}
+  else{
+    const f=pick(FM[eq]),dumb=wd===1||wd===3,core=wd===5,tr=(wd===2||wd===4)&&rg()<.5;
+    const ft=dumb?(m>=45?600:360):core?(m>=45?240:180):0,trs=tr?(m>=45?720:480):0,ct=main-ft-trs;
+    let c=cardio(eq,f,lv,ct);const g=ct-sum(c);if(g>=45)c.push(S(N[3],g,'lift','Hard but conversational, hold a steady pace'));
+    let x=[];
+    if(dumb)x=fin(shuf([pick(POOL.low),pick(POOL.up),pick(POOL.core)]),ft);
+    else if(core)x=fin(shuf(POOL.core).slice(0,3),ft);
+    else if(tr){x=[S(NM.tread[3],trs,'lift','4 to 6% incline, brisk walk, hands off the rails')];cool=NM.tread[4]}
+    segs=segs.concat(c.concat(x));used=sum(c)+sum(x);
+    title=f[0]+(dumb?' + dumbbell finisher':core?' + core':tr?' + incline walk':'');
+    if(dumb)gear='Rower and dumbbells';else if(tr)gear='Bike and treadmill';if(dumb||core)cool='Stretch'}
+  const rem=T0-wu-used-cd;
+  segs.push(S(cool,cd+rem,'cool',cool==='Stretch'?'Hips, hamstrings, chest, shoulders':'Slow it down, let your heart rate drop'));
+  return{id:DN[wd],title:DN[wd]+' · '+title+' · '+m+' min',gear,eq,segs,note,lv}}
+function regen(){const k=dk(sel);DAYS.length=0;DAYS.push(build(sel,mins,(T.shuf||{})[k]||0));day=0;setDay(0)}
+buildDays=function(){const d=$('days'),k=dk(sel);d.className='dn';
+  d.innerHTML='<div class="dr"><button id="dp" aria-label="Previous day">‹</button><div id="dl"></div><button id="dx" aria-label="Next day">›</button></div><div class="mr">'+[30,45].map(m=>`<button data-m="${m}" aria-pressed="${m===mins}">${m} min</button>`).join('')+`<button id="sh">Shuffle</button></div>`;
+  $('dl').textContent=sel.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})+(k===dk(new Date())?' (today)':'');
+  $('dp').onclick=()=>{sel.setDate(sel.getDate()-1);regen()};$('dx').onclick=()=>{sel.setDate(sel.getDate()+1);regen()};
+  d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mins=+b.dataset.m;T.set.mins=mins;save();regen()});
+  $('sh').onclick=()=>{T.shuf=T.shuf||{};T.shuf[k]=(T.shuf[k]||0)+1;save();regen()};
+};
+function mergeT(r){T.days=Object.assign({},T.days,r.days||{});const un=(a,b)=>{const m={};[...(a||[]),...(b||[])].forEach(x=>m[x[0]]=x);return Object.values(m).sort((p,q)=>p[0]<q[0]?-1:1)};T.weights=un(T.weights,r.weights);T.waist=un(T.waist,r.waist);T.set=Object.assign({},T.set,r.set||{})}
+function refresh(){mins=[30,45].includes(T.set.mins)?T.set.mins:45;if(!running)regen()}
+initT();paintHud();
+regen();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
