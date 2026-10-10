@@ -120,7 +120,7 @@ a.lnk{border:1px solid var(--line);background:var(--panel);color:var(--text);bor
   .train{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
   .colA,.colB{display:block;min-width:0}
   .colB{max-height:calc(100dvh - 52px);overflow-y:auto;padding-bottom:8px}
-  h1,.legend{display:none}.gear{font-size:12px;margin:2px 0}
+  h1{display:none}.legend{margin-top:6px;font-size:12px}.gear{font-size:12px;margin:2px 0}
   .days button{padding:7px 0}
   .stage{width:min(40dvh,230px);margin:4px auto 2px}
   .phase{font-size:20px}.time{font-size:clamp(44px,13vh,76px)}
@@ -141,14 +141,15 @@ a.lnk{border:1px solid var(--line);background:var(--panel);color:var(--text);bor
   .days{grid-column:1/4;grid-row:1;display:flex!important;gap:8px;align-items:center;padding-right:120px}
   .dn .dr{flex:0 0 auto;grid-template-columns:34px auto 34px}.dn .dr button{padding:3px 0}
   .mr{margin:0;flex-wrap:nowrap}.mr button{padding:5px 8px}
-  h1,.gear,.legend,.opts,.stat,.tot{display:none}
-  .stage{grid-column:1;grid-row:2/5;--w:clamp(110px,calc(100vh - 84px),200px);--w:clamp(110px,calc(100dvh - 84px),200px);width:var(--w);margin:0}
+  h1,.gear,.opts,.stat,.tot{display:none}
+  .legend{grid-column:1/4;grid-row:6;display:flex;flex-wrap:nowrap;justify-content:center;gap:2px 10px;margin:2px 0 0;font-size:11px;white-space:nowrap}
+  .stage{grid-column:1;grid-row:2/5;--w:clamp(110px,calc(100vh - 104px),200px);--w:clamp(110px,calc(100dvh - 104px),200px);width:var(--w);margin:0}
   .time{font-size:calc(var(--w)*.3)}.phase{font-size:calc(var(--w)*.1)}.round{display:none}
   .cue{grid-column:2;grid-row:2;margin:0;min-height:0;font-size:14px;text-align:left}
   .next{grid-column:2;grid-row:3;margin:0;text-align:left}
   .ctl{grid-column:2;grid-row:4;position:static;padding:0;background:none;gap:10px;justify-content:flex-start;align-self:start}
   .ctl button{width:44px;height:44px}.ctl .go{width:60px;height:60px}
-  .coach{grid-column:3;grid-row:2/5;margin:0;padding:6px 10px;overflow:auto;max-height:calc(100dvh - 84px)}
+  .coach{grid-column:3;grid-row:2/5;margin:0;padding:6px 10px;overflow:auto;max-height:calc(100dvh - 104px)}
   .coach svg{height:74px}.tgt{font-size:15px;margin:2px 0}.coach p{font-size:12px;margin:2px 0}
   .tl{grid-column:1/4;grid-row:5;margin:4px 0 0;height:16px}
 }
