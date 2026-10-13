@@ -27,7 +27,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100vh;font-family:'Figtree',system-ui,sans-serif;color:var(--text);
   --ph:var(--done);background:color-mix(in srgb,var(--ph) 13%,var(--bg));transition:background .4s}
 body[data-t=warm]{--ph:var(--warm)}body[data-t=hard]{--ph:var(--hard)}body[data-t=easy]{--ph:var(--easy)}
-body[data-t=lift]{--ph:var(--lift)}body[data-t=rest]{--ph:var(--rest)}body[data-t=cool]{--ph:var(--cool)}
+body[data-t=lift]{--ph:var(--lift)}body[data-t=rest]{--ph:var(--rest)}body[data-t=cool]{--ph:var(--cool)}body[data-t=steady]{--ph:var(--steady)}
 main{max-width:560px;margin:0 auto;padding:16px 16px 40px}
 .days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .days button{padding:10px 0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;
@@ -157,6 +157,9 @@ a.lnk{border:1px solid var(--line);background:var(--panel);color:var(--text);bor
 .views button[aria-pressed=false]{opacity:.65}
 @media (max-height:560px) and (min-width:560px){.views button{flex:0 0 auto;padding:6px 12px}}
 @media (max-height:420px) and (min-width:520px){.views{gap:4px;flex-wrap:nowrap}.views button{padding:5px 9px;font-size:12px}.days{padding-right:230px;flex-wrap:wrap}#dl{font-size:12px}}
+:root{--steady:#0f8fbf}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--steady:#5ec8f2}}
+:root[data-theme="dark"]{--steady:#5ec8f2}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0e1a21">
@@ -189,7 +192,7 @@ a.lnk{border:1px solid var(--line);background:var(--panel);color:var(--text);bor
   <div class="tot"><div id="bar"></div></div>
   <div class="stat"><span id="el">0:00 done</span><span id="left">45:00 left</span></div>
   <div class="legend">
-    <span style="--c:var(--warm)">Warm-up</span><span style="--c:var(--hard)">Hard</span><span style="--c:var(--easy)">Easy</span>
+    <span style="--c:var(--warm)">Warm-up</span><span style="--c:var(--hard)">Hard</span><span style="--c:var(--easy)">Easy</span><span style="--c:var(--steady)">Steady</span>
     <span style="--c:var(--lift)">Lift</span><span style="--c:var(--rest)">Rest</span><span style="--c:var(--cool)">Cool-down</span>
   </div>
   </div></div>
@@ -197,7 +200,7 @@ a.lnk{border:1px solid var(--line);background:var(--panel);color:var(--text);bor
 <script>
 const S=(n,s,t,c,r)=>({n,s,t,c,r:r||''});
 const rep=(k,f)=>Array.from({length:k},(_,i)=>f(i+1)).flat();
-const NAMES={warm:'Warm up',hard:'Go hard',easy:'Recover',lift:'Lift',rest:'Rest',cool:'Cool down'};
+const NAMES={warm:'Warm up',hard:'Go hard',easy:'Recover',lift:'Lift',steady:'Steady',rest:'Rest',cool:'Cool down'};
 function circuit(rounds,ex,work,rest,between,label){
   return rep(rounds,r=>{
     const out=[];
@@ -346,7 +349,7 @@ const L={
  st:{fig:'stretch',t:'Gentle holds · breathe slowly',pos:'Hamstrings, hips, chest and shoulders. No bouncing, ease into each stretch.',v:'Easier: bend the knees. Harder: hold each stretch longer.'}};
 const LK=[[/deadlift/,'rdl'],[/Push-up/,'push'],[/Bent-over/,'brow'],[/squat/i,'sq'],[/Curl/,'cur'],[/press/i,'pr'],[/glute/i,'br'],[/Single-arm/,'sr'],[/Plank/,'pl'],[/Dead bug/,'db'],[/Russian/,'tw'],[/Bird/,'bd'],[/Stretch/,'st']];
 const CD={
- row:{warm:['18–20 SPM · lever stays put · light pulls',19],hard:['28–30 SPM max · full power every stroke · RPE 8–9',29],sprint:['30 SPM max · all-out power · RPE 9–10',30],easy:['18–20 SPM · lighter pulls, same lever',19],lift:['22–24 SPM · RPE 6–7',23],cool:['16–18 SPM · very light',17]},
+ row:{warm:['18–20 SPM · lever stays put · light pulls',19],hard:['28–30 SPM max · full power every stroke · RPE 8–9',29],sprint:['30 SPM max · all-out power · RPE 9–10',30],easy:['18–20 SPM · lighter pulls, same lever',19],lift:['22–24 SPM · RPE 6–7',23],cool:['18–20 SPM · very light',19]},
  bike:{warm:['60–70 RPM · level 2',65],hard:['85–95 RPM · level 7–8 · RPE 8–9',90],easy:['60–70 RPM · level 3',65],lift:['75–80 RPM · level 5–6 · RPE 6',77],cool:['55–60 RPM · level 1–2',57]},
  tread:{warm:['2.5–3.0 mph · 0–1% incline',52],hard:['3.0–3.5 mph · 4–8% incline',56],easy:['2.8–3.2 mph · 2–3% incline',54],cool:['2.5 mph · flat',48]}};
 const CP={row:'Legs first, then lean back, then pull the arms to the ribs. Reverse on the way back, back tall. Set the Merach lever to 5 for the whole session (4–6 is the usual range) and leave it. Resistance also rises as you pull harder. Watch SPM and Watts on the monitor.',bike:'Seat set so the knee stays slightly bent at full extension. Hands relaxed, chest open. Set the Level on the console (1–10). One pedal turn per second is about 60 RPM, so pace by that count and your effort.',tread:'Tall posture, quick light steps, hands off the rails. Use the 1750 quick speed and incline keys, and keep the safety key clipped on. Walk only, and if a knee complains, lower the incline first.'};
@@ -404,7 +407,7 @@ pause=function(){_pau();try{speechSynthesis.cancel()}catch(e){}};
 paint=function(){_paint();card()};
 setInterval(()=>{if(!running||done)return;const s=segs()[idx],r=rem/1000,nx=segs()[idx+1],pt=s.s>=60?10:s.s>=20?5:0;
   if(pt&&nx&&r<=pt&&!fl.p){fl.p=1;beep(520,.1);setTimeout(()=>beep(520,.1),180);say('Get ready. Next, '+nx.n+', '+dur(nx.s)+'.')}
-  else if(s.s>=40&&!fl.h&&r<=s.s/2&&r>pt+4&&['hard','lift','warm','cool'].includes(s.t)){fl.h=1;s.cl=pick(M[s.t]);$('coach').textContent=s.cl;say(s.cl)}},200);
+  else if(s.s>=40&&!fl.h&&r<=s.s/2&&r>pt+4&&['hard','lift','steady','warm','cool'].includes(s.t)){fl.h=1;s.cl=pick(M[s.t]);$('coach').textContent=s.cl;say(s.cl)}},200);
 $('vc').onclick=e=>{voice=!voice;e.target.setAttribute('aria-pressed',voice);e.target.textContent=voice?'Voice on':'Voice off';if(!voice)try{speechSynthesis.cancel()}catch(x){}};
 
 // ---- Storage (shuffle and length preference; old history is kept, not shown) ----
@@ -432,16 +435,8 @@ const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const hash=x=>{let h=2166136261;for(const c of x)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0};
 const rngf=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 const r5=n=>Math.max(5,Math.round(n/5)*5),sum=a=>a.reduce((x,y)=>x+y.s,0);
-CD.tread.lift=['3.0–3.5 mph · 4–6% incline',54];
-function level(d){const t=+d,wk=Math.floor((t-new Date(2026,7,26))/6048e5),td=new Date();td.setHours(0,0,0,0);
-  if(wk>=0&&wk%4===3)return[-1,'Deload week: lighter work to recover'];
-  if(t>+td+864e5)return[0,'Planned ahead: standard load'];
-  let c=0;for(let i=1;i<=7;i++){const x=new Date(d);x.setDate(x.getDate()-i);if(T.days[dk(x)])c++}
-  const ws=T.weights.filter(w=>{const a=(t-+new Date(w[0]+'T00:00'))/864e5;return a>=0&&a<=14});
-  if(c<=2)return[-1,'Easing in: few workouts logged in the past week'];
-  if(ws.length>=2){const a=ws[0],b=ws[ws.length-1],wks=Math.max(1,(+new Date(b[0])-+new Date(a[0]))/6048e5);if(c>=4&&(a[1]-b[1])/wks<.5)return[1,'Pushing a little: weight is moving slower than goal pace']}
-  if(!ws.some(w=>(t-+new Date(w[0]+'T00:00'))/864e5<=7))return[0,'No recent weigh-in. Add one to tune your plan'];
-  return[0,'On track: standard load']}
+CD.tread.lift=['3.0–3.5 mph · 4–6% incline',54];CD.row.steady=CD.row.lift;CD.bike.steady=CD.bike.lift;CD.tread.steady=CD.tread.lift;M.steady=M.lift;
+function level(d){return[0,'Standard week']}
 const CUE={'Goblet box squat':'Sit back to the bench, drive up through the heels','Romanian deadlift x10':'Hinge at the hips, back flat','Weighted glute bridge':'Squeeze at the top for a beat','Shoulder press':'Brace your core, press straight up','Bent-over row x10':'Pull elbows to your hips','Push-ups x10':'Body in one line, controlled','Curl to press':'Smooth and controlled','Single-arm row':'Switch arms halfway','Plank':'Straight line, breathe','Dead bug':'Low back stays down','Russian twist':'Rotate from the ribs','Bird dog':'Reach long, hips level'};
 const POOL={low:['Goblet box squat','Romanian deadlift x10','Weighted glute bridge'],up:['Shoulder press','Bent-over row x10','Push-ups x10','Curl to press','Single-arm row'],core:['Plank','Dead bug','Russian twist','Bird dog']};
 const FM={row:[['40/80 intervals',[40],80],['30/60 intervals',[30],60],['60/60 power intervals',[60],60],['Pyramid 20-60 sec',[20,40,60,40,20],60]],
@@ -455,24 +450,27 @@ function cardio(eq,f,lv,time){const[,wk,rs]=f,N=NM[eq],out=[],R=Math.round(rs*(l
 function lifts(names,lv,time){const w=40+5*lv,r=lv<0?25:20,bt=lv>0?75:90,n=names.length,rt=n*w+(n-1)*r,k=Math.floor((time+bt)/(rt+bt));
   return k>0?circuit(k,names.map(x=>[x,CUE[x]]),w,r,bt,'Round'):[]}
 function build(d,m,salt){
-  const T0=m*60,wd=d.getDay(),[lv0,note0]=level(d),rg=rngf(hash(dk(d)+'|'+salt)),pick=a=>a[Math.floor(rg()*a.length)],shuf=a=>a.map(x=>[rg(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
-  const wu=m>=45?300:210,cd=m>=45?240:150,main=T0-wu-cd,wk=wd%6>0,MN={row:'Rower',bike:'Recumbent bike',tread:'Treadmill'};
-  const eq=!wk?pick(['bike','tread']):[0,'row','bike','row','bike','row'][wd],N=NM[eq];
-  const lv=wk?Math.max(-1,Math.min(1,lv0+([0,0,-1,0,0,-1][wd]))):0;
+  const T0=m*60,wd=d.getDay(),[lv,note]=level(d),alt=salt%2===1,wk=wd%6>0,MN={row:'Rower',bike:'Recumbent bike',tread:'Treadmill'};
+  const eq=!wk?'tread':[0,'row','bike','row','bike','row'][wd],N=NM[eq],wu=m>=45?300:210,cd=m>=45?240:150,main=T0-wu-cd;
   const fin=(names,time)=>{const w=45+5*lv,r=15,bt=30,n=names.length,rt=n*w+(n-1)*r,k=Math.floor((time+bt)/(rt+bt));return k>0?circuit(k,names.map(x=>[x,CUE[x]||'Smooth and controlled']),w,r,bt,'Round'):[]};
-  let segs=[S(N[2],wu,'warm','Easy start, build to a steady pace')],title,used=0,gear=MN[eq],cool=N[4],note=wk?note0:'Optional recovery day. Keep it easy';
-  if(!wk){segs.push(S(N[1],main,'easy','Relaxed pace, nose breathing'));title='Active recovery';used=main}
-  else{
-    const f=pick(FM[eq]),dumb=wd===1||wd===3,core=wd===5,tr=(wd===2||wd===4)&&rg()<.5;
-    const ft=dumb?(m>=45?600:360):core?(m>=45?240:180):0,trs=tr?(m>=45?720:480):0,ct=main-ft-trs;
-    let c=cardio(eq,f,lv,ct);const g=ct-sum(c);if(g>=45)c.push(S(N[3],g,'lift','Hard but conversational, hold a steady pace'));
-    let x=[];
-    if(dumb)x=fin(shuf([pick(POOL.low),pick(POOL.up),pick(POOL.core)]),ft);
-    else if(core)x=fin(shuf(POOL.core).slice(0,3),ft);
-    else if(tr){x=[S(NM.tread[3],trs,'lift','4 to 6% incline, brisk walk, hands off the rails')];cool=NM.tread[4]}
-    segs=segs.concat(c.concat(x));used=sum(c)+sum(x);
-    title=f[0]+(dumb?' + dumbbell finisher':core?' + core':tr?' + incline walk':'');
-    if(dumb)gear='Rower and dumbbells';else if(tr)gear='Bike and treadmill';if(dumb||core)cool='Stretch'}
+  const ST='Hard but conversational, hold a steady split';
+  let segs=[S(N[2],wu,'warm','Easy start, build to a steady pace')],title,used=0,gear=MN[eq],cool=N[4];
+  if(!wk){segs.push(S(N[1],main,'easy','Relaxed walk, nose breathing'));used=main;title='Easy walk (optional rest day)'}
+  else if(eq==='row'){let c,f;
+    if(wd===1){f=alt?FM.row[3]:FM.row[2];c=cardio('row',f,lv,main);title=f[0]}
+    else if(wd===3){
+      if(alt){f=FM.row[0];c=cardio('row',f,lv,main);title=f[0]}
+      else{c=[];let u=0,j=1;const st=Math.round(240*(lv<0?.85:1));
+        while(u+st+60<=main){c.push(S(N[3],st,'steady',ST,'Block '+j),S(N[0],60,'hard',HC.row,'Block '+j));u+=st+60;j++}
+        const r=main-u;if(r>=120)c.push(S(N[3],r,'steady',ST));title='Steady rows with 1-minute surges'}}
+    else{const sec=Math.round(main*.33/60)*60;
+      if(alt){f=FM.row[1];c=cardio('row',f,lv,main);title=f[0]}
+      else{c=[S(N[3],sec,'steady',ST),...cardio('row',['',[30],30],lv,main-sec)];title='Steady row, then 30/30 sprints'}}
+    used=sum(c);segs=segs.concat(c)}
+  else{const ft=m>=45?840:480,A=wd===2?['Goblet box squat','Shoulder press','Single-arm row','Plank']:['Romanian deadlift x10','Push-ups x10','Curl to press','Dead bug'],B=wd===2?['Weighted glute bridge','Push-ups x10','Single-arm row','Plank']:['Goblet box squat','Shoulder press','Curl to press','Dead bug'];
+    const f=wd===2?(alt?FM.bike[1]:FM.bike[0]):(alt?FM.bike[3]:FM.bike[2]);
+    const c=cardio('bike',f,lv,main-ft),g=main-ft-sum(c);if(g>=45)c.push(S(N[3],g,'steady','Moderate pace, you can still talk'));
+    const x=fin(alt?B:A,ft);segs=segs.concat(c,x);used=sum(c)+sum(x);title=f[0]+' + dumbbell circuit';cool='Stretch';gear='Bike and dumbbells'}
   const rem=T0-wu-used-cd;
   segs.push(S(cool,cd+rem,'cool',cool==='Stretch'?'Hips, hamstrings, chest, shoulders':'Slow it down, let your heart rate drop'));
   return{id:DN[wd],title:DN[wd]+' · '+title+' · '+m+' min',gear,eq,segs,note,lv}}
