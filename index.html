@@ -455,7 +455,11 @@ function build(d,m,salt){
   const fin=(names,time)=>{const w=45+5*lv,r=15,bt=30,n=names.length,rt=n*w+(n-1)*r,k=Math.floor((time+bt)/(rt+bt));return k>0?circuit(k,names.map(x=>[x,CUE[x]||'Smooth and controlled']),w,r,bt,'Round'):[]};
   const ST='Hard but conversational, hold a steady split';
   let segs=[S(N[2],wu,'warm','Easy start, build to a steady pace')],title,used=0,gear=MN[eq],cool=N[4];
-  if(!wk){segs.push(S(N[1],main,'easy','Relaxed walk, nose breathing'));used=main;title='Easy walk (optional rest day)'}
+  if(!wk){const ft=m>=45?840:480,sat=wd===6,A=sat?['Goblet box squat','Shoulder press','Single-arm row','Plank']:['Romanian deadlift x10','Push-ups x10','Curl to press','Dead bug'],B=sat?['Weighted glute bridge','Push-ups x10','Single-arm row','Plank']:['Goblet box squat','Shoulder press','Curl to press','Dead bug'];
+    const TW='4 to 6% incline, brisk walk, hands off the rails';let c,f;
+    if(sat){f=alt?FM.tread[1]:FM.tread[0];c=cardio('tread',f,lv,main-ft);const g=main-ft-sum(c);if(g>=45)c.push(S(N[3],g,'steady',TW));title=f[0]}
+    else{c=[S(N[3],main-ft,'steady',TW)];title='Steady incline walk'}
+    const x=fin(alt?B:A,ft);segs=segs.concat(c,x);used=sum(c)+sum(x);title+=' + dumbbell circuit';cool='Stretch';gear='Treadmill and dumbbells'}
   else if(eq==='row'){let c,f;
     if(wd===1){f=alt?FM.row[3]:FM.row[2];c=cardio('row',f,lv,main);title=f[0]}
     else if(wd===3){
@@ -467,10 +471,9 @@ function build(d,m,salt){
       if(alt){f=FM.row[1];c=cardio('row',f,lv,main);title=f[0]}
       else{c=[S(N[3],sec,'steady',ST),...cardio('row',['',[30],30],lv,main-sec)];title='Steady row, then 30/30 sprints'}}
     used=sum(c);segs=segs.concat(c)}
-  else{const ft=m>=45?840:480,A=wd===2?['Goblet box squat','Shoulder press','Single-arm row','Plank']:['Romanian deadlift x10','Push-ups x10','Curl to press','Dead bug'],B=wd===2?['Weighted glute bridge','Push-ups x10','Single-arm row','Plank']:['Goblet box squat','Shoulder press','Curl to press','Dead bug'];
-    const f=wd===2?(alt?FM.bike[1]:FM.bike[0]):(alt?FM.bike[3]:FM.bike[2]);
-    const c=cardio('bike',f,lv,main-ft),g=main-ft-sum(c);if(g>=45)c.push(S(N[3],g,'steady','Moderate pace, you can still talk'));
-    const x=fin(alt?B:A,ft);segs=segs.concat(c,x);used=sum(c)+sum(x);title=f[0]+' + dumbbell circuit';cool='Stretch';gear='Bike and dumbbells'}
+  else{const f=wd===2?(alt?FM.bike[1]:FM.bike[0]):(alt?FM.bike[3]:FM.bike[2]);
+    const c=cardio('bike',f,lv,main),g=main-sum(c);if(g>=45)c.push(S(N[3],g,'steady','Moderate pace, you can still talk'));
+    segs=segs.concat(c);used=sum(c);title=f[0]}
   const rem=T0-wu-used-cd;
   segs.push(S(cool,cd+rem,'cool',cool==='Stretch'?'Hips, hamstrings, chest, shoulders':'Slow it down, let your heart rate drop'));
   return{id:DN[wd],title:DN[wd]+' · '+title+' · '+m+' min',gear,eq,segs,note,lv}}
@@ -484,6 +487,7 @@ buildDays=function(){const d=$('days'),k=dk(sel);d.className='dn';
 };
 function mergeT(r){T.days=Object.assign({},T.days,r.days||{});const un=(a,b)=>{const m={};[...(a||[]),...(b||[])].forEach(x=>m[x[0]]=x);return Object.values(m).sort((p,q)=>p[0]<q[0]?-1:1)};T.weights=un(T.weights,r.weights);T.waist=un(T.waist,r.waist);T.set=Object.assign({},T.set,r.set||{})}
 function refresh(){mins=[30,45].includes(T.set.mins)?T.set.mins:45;if(!running)regen()}
+const _p5=paint;paint=function(){_p5();const s=segs()[idx];if(s&&s.lab&&!done&&!(gate&&!running))$('phase').textContent=s.lab};
 initT();paintHud();
 regen();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
